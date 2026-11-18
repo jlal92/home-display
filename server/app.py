@@ -232,7 +232,7 @@ def wx_fetch():
     else:
         lat, lon = wx_location()
         q = urlencode({
-            "latitude": lat, "longitude": lon, "temperature_unit": UNITS, "timezone": TZ.key, "forecast_days": 4,
+            "latitude": lat, "longitude": lon, "temperature_unit": UNITS, "timezone": TZ.key, "forecast_days": 7,
             "current": "temperature_2m,weather_code,is_day",
             "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
         })
@@ -272,6 +272,26 @@ def wx_attr():
 
 
 # ---------- rendering ----------
+def wx_by_date():
+    """{YYYY-MM-DD: day forecast} for fresh weather, else {}."""
+    with wx_lock:
+        data, at = wx_state["data"], wx_state["at"]
+    if not data or time.time() - at > WX_MAX_AGE:
+        return {}
+    return dict((d["date"], d) for d in data["days"])
+
+
+def day_wx_html(wx, day):
+    d = wx.get(day.isoformat())
+    if not d:
+        return ""
+    glyph, _ = wx_glyph(d["code"], True)
+    rain = ""
+    if d["rain"] is not None and d["rain"] >= 30:
+        rain = ' <i>%d%%</i>' % d["rain"]
+    return '<span class="dw"><b>%s</b> %d&deg;/%d&deg;%s</span>' % (glyph, d["hi"], d["lo"], rain)
+
+
 def day_label(day, today):
     delta = (day - today).days
     name = day.strftime("%A")
@@ -315,6 +335,7 @@ def render_agenda(now, center=None):
     used = 0
     shown_ids, hidden_ids = set(), set()
     full = False
+    wx = wx_by_date()
     if center is None:
         offsets = list(range(DAYS_AHEAD))
     else:
@@ -344,8 +365,8 @@ def render_agenda(now, center=None):
         shown_ids.update(id(e) for e in rows)
         used += HDR_PX + need + DAYGAP_PX
         big, small = day_label(day, today)
-        parts.append('<div class="day%s"><div class="dayhdr"><span class="dn">%s</span><span class="dd">%s</span></div>' % (
-            " sel" if day == center else "", html.escape(big), html.escape(small)))
+        parts.append('<div class="day%s"><div class="dayhdr">%s<span class="dn">%s</span><span class="dd">%s</span></div>' % (
+            " sel" if day == center else "", day_wx_html(wx, day), html.escape(big), html.escape(small)))
         if not rows:
             parts.append('<div class="none">Nothing planned</div>')
         for e in rows:
