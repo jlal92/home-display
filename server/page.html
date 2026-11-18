@@ -41,27 +41,27 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; background: 
 .more { font-size: 26px; color: #666; padding: 2px 0 0 16px; }
 
 /* Month grid in the right panel (built by the page from the iPad clock + busy days from the server). */
-#month { position: absolute; left: 0; right: 0; top: 305px; padding: 0 14px; }
-#mhead { position: relative; font-size: 26px; font-weight: 700; height: 34px; line-height: 34px; text-align: center; }
-.mnav { position: absolute; top: 0; width: 70px; height: 34px; font-size: 38px; line-height: 30px; cursor: pointer; }
+#month { position: absolute; left: 0; right: 0; top: 282px; padding: 0 14px; }
+#mhead { position: relative; font-size: 29px; font-weight: 700; height: 40px; line-height: 40px; text-align: center; }
+.mnav { position: absolute; top: 0; width: 70px; height: 40px; font-size: 42px; line-height: 36px; cursor: pointer; }
 .mnav.l { left: 0; }
 .mnav.r { right: 0; }
 #status { cursor: pointer; }
 #status small { display: block; font-size: 17px; opacity: 0.8; margin-top: 2px; font-weight: 400; }
 #refreshbtn { position: absolute; top: 10px; right: 10px; height: 38px; line-height: 38px; padding: 0 16px; font-size: 21px; font-weight: 700; border: 2px solid rgba(255,255,255,0.7); border-radius: 19px; color: #fff; cursor: pointer; }
 #mgrid { width: 100%; border-collapse: collapse; table-layout: fixed; }
-#mgrid th { font-size: 17px; font-weight: 400; height: 22px; opacity: 0.75; }
-#mgrid td { text-align: center; height: 36px; font-size: 22px; vertical-align: top; padding-top: 1px; cursor: pointer; }
-#mgrid td.sel span { display: inline-block; width: 26px; height: 26px; line-height: 26px; border: 2px solid #ffd24d; border-radius: 17px; }
+#mgrid th { font-size: 19px; font-weight: 400; height: 26px; opacity: 0.75; }
+#mgrid td { text-align: center; height: 44px; font-size: 25px; vertical-align: top; padding-top: 2px; cursor: pointer; }
+#mgrid td.sel span { display: inline-block; width: 30px; height: 30px; line-height: 30px; border: 2px solid #ffd24d; border-radius: 19px; }
 #mgrid td.o { opacity: 0.35; }
-#mgrid td.bz:after { content: ""; display: block; width: 7px; height: 7px; border-radius: 4px; background: #ffd24d; margin: 0 auto; }
-#mgrid td.td span { display: inline-block; width: 30px; height: 30px; line-height: 30px; border-radius: 15px; background: #fff; color: #1f5f8b; font-weight: 700; }
+#mgrid td.bz:after { content: ""; display: block; width: 8px; height: 8px; border-radius: 4px; background: #ffd24d; margin: 1px auto 0; }
+#mgrid td.td span { display: inline-block; width: 36px; height: 36px; line-height: 36px; border-radius: 18px; background: #fff; color: #1f5f8b; font-weight: 700; }
 
 /* Weather block (between the date and the month grid). Tap it for a 4-day forecast. */
-#weather { position: absolute; left: 0; right: 0; top: 293px; height: 62px; padding: 0 10px; text-align: center; white-space: nowrap; cursor: pointer; display: none; }
-#wx1 { font-size: 36px; line-height: 38px; font-weight: 700; }
-#wx1 span { font-size: 22px; font-weight: 400; margin-left: 8px; opacity: 0.9; }
-#wx2 { font-size: 20px; line-height: 24px; opacity: 0.9; }
+#weather { position: absolute; left: 0; right: 0; top: 186px; height: 76px; padding: 0 10px; text-align: center; white-space: nowrap; cursor: pointer; display: none; }
+#wx1 { font-size: 42px; line-height: 46px; font-weight: 700; }
+#wx1 span { font-size: 25px; font-weight: 400; margin-left: 10px; opacity: 0.9; }
+#wx2 { font-size: 22px; line-height: 28px; opacity: 0.9; }
 
 /* Forecast rows (left column, after tapping the weather block). */
 .fc { height: 84px; line-height: 84px; font-size: 30px; white-space: nowrap; overflow: hidden; border-bottom: 1px solid #c9c4b8; }
@@ -95,8 +95,6 @@ body.night .day.sel .dayhdr { background: #1b2a38; }
   <div id="refreshbtn">Refresh</div>
   <div id="clockwrap">
     <div><span id="time">--:--</span><span id="ampm"></span></div>
-    <div id="weekday"></div>
-    <div id="date"></div>
   </div>
   <div id="weather"><div id="wx1"></div><div id="wx2"></div></div>
   <div id="month"></div>
@@ -120,8 +118,6 @@ body.night .day.sel .dayhdr { background: #1b2a38; }
     var m = d.getMinutes();
     $('time').innerHTML = ((h % 12) || 12) + ':' + (m < 10 ? '0' : '') + m;
     $('ampm').innerHTML = h < 12 ? 'AM' : 'PM';
-    $('weekday').innerHTML = DAYS[d.getDay()];
-    $('date').innerHTML = MONTHS[d.getMonth()] + ' ' + d.getDate();
     // Night mode, and a small hourly shift of the clock to limit image retention.
     var night = (h >= 21 || h < 6);
     var cls = document.body.className;
@@ -156,12 +152,12 @@ body.night .day.sel .dayhdr { background: #1b2a38; }
     var raw = meta ? meta.getAttribute('data-wx') : '';
     var w = $('weather');
     var p;
-    if (!raw) { w.style.display = 'none'; $('month').style.top = '305px'; return; }
+    if (!raw) { w.style.display = 'none'; $('month').style.top = '200px'; return; }
     p = raw.split('|');
     $('wx1').innerHTML = p[1] + ' ' + p[0] + '&deg;<span>' + p[2] + '</span>';
     $('wx2').innerHTML = 'H ' + p[3] + '&deg; &nbsp;L ' + p[4] + '&deg;' + (p[5] !== '' ? ' &nbsp;&middot;&nbsp; Rain ' + p[5] + '%' : '');
     w.style.display = 'block';
-    $('month').style.top = '360px';
+    $('month').style.top = '282px';
   }
 
   // Month grid: Sunday-first, today as a white circle, a yellow dot on days that have events.
