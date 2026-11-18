@@ -408,7 +408,7 @@ def render_forecast(now):
         big, small = day_label(day, today)
         rain = "" if d["rain"] is None else "%d%%" % d["rain"]
         parts.append(
-            '<div class="fc"><span class="fcd">%s<small>%s</small></span><span class="fci">%s %s</span>'
+            '<div class="fc"><span class="fcd">%s<small>%s</small></span><span class="fci"><b class="fcg">%s</b> %s</span>'
             '<span class="fct">%d&deg; / %d&deg;</span><span class="fcr">%s</span></div>'
             % (html.escape(big), html.escape(small), glyph, html.escape(word), d["hi"], d["lo"], rain)
         )

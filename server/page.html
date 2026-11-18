@@ -60,7 +60,8 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; background: 
 /* Weather block (between the date and the month grid). Tap it for a 4-day forecast. */
 #weather { position: absolute; left: 0; right: 0; top: 186px; height: 76px; padding: 0 10px; text-align: center; white-space: nowrap; cursor: pointer; display: none; }
 #wx1 { font-size: 42px; line-height: 46px; font-weight: 700; }
-#wx1 span { font-size: 25px; font-weight: 400; margin-left: 10px; opacity: 0.9; }
+#wx1 span { font-size: 23px; font-weight: 400; margin-left: 6px; opacity: 0.9; }
+#wx1 b.wxg { display: inline-block; height: 46px; line-height: 46px; font-size: 52px; font-weight: 400; vertical-align: top; margin-right: 4px; }
 #wx2 { font-size: 22px; line-height: 28px; opacity: 0.9; }
 
 /* Forecast rows (left column, after tapping the weather block). */
@@ -69,6 +70,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; background: 
 .fcd { width: 168px; font-weight: 700; line-height: 38px; padding-top: 10px; color: #1f5f8b; }
 .fcd small { display: block; font-size: 22px; font-weight: 400; color: #777; line-height: 26px; }
 .fci { width: 232px; }
+.fci b.fcg { font-size: 44px; font-weight: 400; vertical-align: -4px; }
 .fct { width: 130px; font-weight: 700; }
 .fcr { width: 66px; font-size: 24px; color: #666; text-align: right; }
 
@@ -154,7 +156,7 @@ body.night .day.sel .dayhdr { background: #1b2a38; }
     var p;
     if (!raw) { w.style.display = 'none'; $('month').style.top = '200px'; return; }
     p = raw.split('|');
-    $('wx1').innerHTML = p[1] + ' ' + p[0] + '&deg;<span>' + p[2] + '</span>';
+    $('wx1').innerHTML = '<b class="wxg">' + p[1] + '</b>' + p[0] + '&deg;<span>' + p[2] + '</span>';
     $('wx2').innerHTML = 'H ' + p[3] + '&deg; &nbsp;L ' + p[4] + '&deg;' + (p[5] !== '' ? ' &nbsp;&middot;&nbsp; Rain ' + p[5] + '%' : '');
     w.style.display = 'block';
     $('month').style.top = '282px';
