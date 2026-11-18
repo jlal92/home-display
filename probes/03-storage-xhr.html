@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probe 3: storage + XHR</title>
+<script src="reporter.js"></script>
+<style>
+body { margin: 0; padding: 16px; font-family: Helvetica, Arial, sans-serif; font-size: 22px; }
+h1 { margin: 0 0 8px; font-size: 28px; }
+.row { border-bottom: 1px solid #999; padding: 6px 0; word-wrap: break-word; }
+.k { display: inline-block; width: 300px; font-weight: bold; }
+.ok { color: #060; } .bad { color: #b00; }
+button { font-size: 22px; padding: 10px 18px; margin: 10px 8px 10px 0; }
+</style>
+</head>
+<body>
+<h1>Probe 3: storage + XHR</h1>
+<div id="out"></div>
+<button id="again">Run XHR again</button>
+<button id="clear">Clear counter</button>
+<script>
+(function () {
+  var out = document.getElementById('out');
+  function row(id, k, v, good) {
+    var d = document.getElementById(id);
+    if (!d) { d = document.createElement('div'); d.id = id; d.className = 'row'; out.appendChild(d); }
+    d.innerHTML = '<span class="k">' + k + '</span><span class="' + (good === true ? 'ok' : good === false ? 'bad' : '') + '">' + v + '</span>';
+  }
+
+  // localStorage persistence: counts how many times this page was opened.
+  function storage() {
+    try {
+      var n = parseInt(localStorage.getItem('probe3_opens') || '0', 10) + 1;
+      localStorage.setItem('probe3_opens', String(n));
+      row('ls', 'localStorage opens', n + ' (reload the page: should go up. Close Safari fully and reopen: should survive)', true);
+    } catch (e) {
+      row('ls', 'localStorage', 'FAILED: ' + e.message + ' (private browsing?)', false);
+    }
+  }
+
+  function xhr() {
+    row('xhr', 'XHR to ping.json', 'running...');
+    var t0 = new Date().getTime();
+    var x = new XMLHttpRequest();
+    x.open('GET', 'ping.json?_=' + t0, true);
+    x.timeout = 8000;
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) { return; }
+      var ms = new Date().getTime() - t0;
+      if (x.status === 200) {
+        var data;
+        try { data = JSON.parse(x.responseText); } catch (e) { data = null; }
+        row('xhr', 'XHR to ping.json', 'OK ' + ms + ' ms. Server says: ' + (data ? data.server_time : 'bad JSON'), !!data);
+        if (data && data.server_time) {
+          var drift = new Date(data.server_time).getTime() - new Date().getTime();
+          row('drift', 'iPad clock vs server', Math.round(drift / 1000) + ' s difference (positive = iPad behind)', Math.abs(drift) < 120000);
+        }
+      } else {
+        row('xhr', 'XHR to ping.json', 'FAILED status ' + x.status, false);
+      }
+    };
+    x.ontimeout = function () { row('xhr', 'XHR to ping.json', 'TIMEOUT', false); };
+    x.send();
+  }
+
+  document.getElementById('again').onclick = xhr;
+  document.getElementById('clear').onclick = function () {
+    try { localStorage.removeItem('probe3_opens'); } catch (e) {}
+    storage();
+  };
+  row('proto', 'Page URL', location.href);
+  storage();
+  xhr();
+})();
+</script>
+</body>
+</html>

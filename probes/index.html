@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>home-display probes</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 24px; font-size: 22px; line-height: 1.5; }
+a { display: block; margin: 14px 0; padding: 14px; border: 2px solid #333; color: #000; text-decoration: none; }
+small { display: block; font-size: 15px; color: #444; }
+</style>
+</head>
+<body>
+<h1>Probes (Phase 0)</h1>
+<p>Open each page on the iPad, then take a photo or screenshot of the result.</p>
+<a href="01-basic.html">1. Basics: protocol, screen, CSS, fonts<small>Page loads, sizes, flexbox, calc, transitions</small></a>
+<a href="02-js.html">2. JavaScript support<small>Syntax and API checks, no frameworks</small></a>
+<a href="03-storage-xhr.html">3. localStorage + XHR<small>Same-origin request to ping.json, storage write/read</small></a>
+<a href="04-refresh.html">4. Meta refresh<small>Reloads itself every 10 s; counts reloads</small></a>
+<a href="05-clock.html">5. Clock + timer drift<small>setInterval, Date, leave open 10 min</small></a>
+<a href="06-wake.html">6. Sleep and wake<small>Lock the iPad, wake it, see whether the page notices and refreshes</small></a>
+<p><small>Error reporter: add <code>&lt;script src="reporter.js"&gt;&lt;/script&gt;</code> first in any page.
+It sends errors to /report on the same server (works only when a probe server is running).</small></p>
+</body>
+</html>

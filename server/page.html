@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Home">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta http-equiv="refresh" content="3600">
+<title>Home</title>
+<style>
+/* ES5-era CSS only: no grid, no CSS variables. Designed for 1024x768 landscape. */
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: rgba(0,0,0,0); }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; background: #f6f3ec; color: #1c1c1e; position: relative; -webkit-user-select: none; user-select: none; }
+#left { position: absolute; left: 0; top: 0; bottom: 0; width: 65%; padding: 14px 18px 0 22px; overflow: hidden; box-sizing: border-box; -webkit-box-sizing: border-box; }
+#right { position: absolute; right: 0; top: 0; bottom: 0; width: 35%; background: #1f5f8b; color: #fff; text-align: center; overflow: hidden; }
+#clockwrap { position: absolute; left: 0; right: 0; top: 9%; white-space: nowrap; }
+#time { font-size: 96px; line-height: 1; font-weight: 700; letter-spacing: -2px; white-space: nowrap; }
+#ampm { font-size: 36px; font-weight: 700; margin-left: 6px; letter-spacing: 0; }
+#weekday { font-size: 56px; font-weight: 700; margin-top: 18px; }
+#date { font-size: 38px; margin-top: 4px; opacity: 0.92; }
+#status { position: absolute; left: 10px; right: 10px; bottom: 14px; font-size: 22px; opacity: 0.9; }
+#status.bad { background: #b3261e; color: #fff; opacity: 1; padding: 8px 6px; border-radius: 6px; font-weight: 700; }
+
+.day { margin-bottom: 6px; }
+.dayhdr { border-bottom: 3px solid #1f5f8b; height: 44px; line-height: 44px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; }
+.dn { font-size: 32px; font-weight: 700; color: #1f5f8b; }
+.dd { font-size: 24px; margin-left: 14px; color: #666; }
+.ev { position: relative; height: 46px; line-height: 46px; font-size: 31px; white-space: nowrap; overflow: hidden; border-left: 8px solid transparent; }
+.ev .t { position: absolute; left: 8px; top: 0; width: 150px; font-weight: 700; }
+.ev .n { display: block; margin-left: 166px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev.allday .t { font-weight: 400; color: #1f5f8b; }
+.ev.cont .t { font-weight: 400; font-size: 25px; }
+.back { height: 46px; line-height: 46px; font-size: 28px; font-weight: 700; color: #1f5f8b; cursor: pointer; margin-bottom: 4px; border: 2px solid #1f5f8b; border-radius: 8px; text-align: center; }
+.day.sel .dayhdr { background: #dbe8f3; }
+.ev.past { color: #9a9a9a; }
+.ev.past .t { font-weight: 400; }
+.ev.now { background: #fff1b3; border-left-color: #e0a800; }
+.none { height: 40px; line-height: 40px; font-size: 28px; color: #8a8a8a; padding-left: 16px; }
+.more { font-size: 26px; color: #666; padding: 2px 0 0 16px; }
+
+/* Month grid in the right panel (built by the page from the iPad clock + busy days from the server). */
+#month { position: absolute; left: 0; right: 0; top: 305px; padding: 0 14px; }
+#mhead { position: relative; font-size: 26px; font-weight: 700; height: 34px; line-height: 34px; text-align: center; }
+.mnav { position: absolute; top: 0; width: 70px; height: 34px; font-size: 38px; line-height: 30px; cursor: pointer; }
+.mnav.l { left: 0; }
+.mnav.r { right: 0; }
+#status { cursor: pointer; }
+#status small { display: block; font-size: 17px; opacity: 0.8; margin-top: 2px; font-weight: 400; }
+#refreshbtn { position: absolute; top: 10px; right: 10px; height: 38px; line-height: 38px; padding: 0 16px; font-size: 21px; font-weight: 700; border: 2px solid rgba(255,255,255,0.7); border-radius: 19px; color: #fff; cursor: pointer; }
+#mgrid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+#mgrid th { font-size: 17px; font-weight: 400; height: 22px; opacity: 0.75; }
+#mgrid td { text-align: center; height: 36px; font-size: 22px; vertical-align: top; padding-top: 1px; cursor: pointer; }
+#mgrid td.sel span { display: inline-block; width: 26px; height: 26px; line-height: 26px; border: 2px solid #ffd24d; border-radius: 17px; }
+#mgrid td.o { opacity: 0.35; }
+#mgrid td.bz:after { content: ""; display: block; width: 7px; height: 7px; border-radius: 4px; background: #ffd24d; margin: 0 auto; }
+#mgrid td.td span { display: inline-block; width: 30px; height: 30px; line-height: 30px; border-radius: 15px; background: #fff; color: #1f5f8b; font-weight: 700; }
+
+/* Weather block (between the date and the month grid). Tap it for a 4-day forecast. */
+#weather { position: absolute; left: 0; right: 0; top: 293px; height: 62px; padding: 0 10px; text-align: center; white-space: nowrap; cursor: pointer; display: none; }
+#wx1 { font-size: 36px; line-height: 38px; font-weight: 700; }
+#wx1 span { font-size: 22px; font-weight: 400; margin-left: 8px; opacity: 0.9; }
+#wx2 { font-size: 20px; line-height: 24px; opacity: 0.9; }
+
+/* Forecast rows (left column, after tapping the weather block). */
+.fc { height: 84px; line-height: 84px; font-size: 30px; white-space: nowrap; overflow: hidden; border-bottom: 1px solid #c9c4b8; }
+.fc span { display: inline-block; vertical-align: top; overflow: hidden; }
+.fcd { width: 168px; font-weight: 700; line-height: 38px; padding-top: 10px; color: #1f5f8b; }
+.fcd small { display: block; font-size: 22px; font-weight: 400; color: #777; line-height: 26px; }
+.fci { width: 232px; }
+.fct { width: 130px; font-weight: 700; }
+.fcr { width: 66px; font-size: 24px; color: #666; text-align: right; }
+
+/* Night mode: toggled by the page between 9 PM and 6 AM to cut glare. */
+body.night { background: #0e1114; color: #e6e6e6; }
+body.night #right { background: #14202b; }
+body.night .dn { color: #7fb3d9; }
+body.night .dd { color: #9aa0a6; }
+body.night .dayhdr { border-bottom-color: #3a5a73; }
+body.night .ev.allday .t { color: #7fb3d9; }
+body.night .ev.past { color: #6b7075; }
+body.night .ev.now { background: #3a3000; border-left-color: #e0a800; }
+body.night .none, body.night .more { color: #8a8f94; }
+body.night .back { color: #7fb3d9; border-color: #7fb3d9; }
+body.night .fc { border-bottom-color: #2a3540; }
+body.night .fcd { color: #7fb3d9; }
+body.night .fcd small, body.night .fcr { color: #9aa0a6; }
+body.night .day.sel .dayhdr { background: #1b2a38; }
+</style>
+</head>
+<body>
+<div id="left"><div id="agenda">{{AGENDA}}</div></div>
+<div id="right">
+  <div id="refreshbtn">Refresh</div>
+  <div id="clockwrap">
+    <div><span id="time">--:--</span><span id="ampm"></span></div>
+    <div id="weekday"></div>
+    <div id="date"></div>
+  </div>
+  <div id="weather"><div id="wx1"></div><div id="wx2"></div></div>
+  <div id="month"></div>
+  <div id="status">Loading...</div>
+</div>
+<script>
+/* ES5 only (verified limits of Safari 9 on this iPad): var/function, XHR, no fetch, no Intl. */
+(function () {
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var lastTick = new Date().getTime();
+  var lastFetchOk = 0;
+  var failing = false;
+  var busy = false;      // true while an XHR refresh is in flight
+
+  function $(id) { return document.getElementById(id); }
+
+  function paintClock() {
+    var d = new Date();
+    var h = d.getHours();
+    var m = d.getMinutes();
+    $('time').innerHTML = ((h % 12) || 12) + ':' + (m < 10 ? '0' : '') + m;
+    $('ampm').innerHTML = h < 12 ? 'AM' : 'PM';
+    $('weekday').innerHTML = DAYS[d.getDay()];
+    $('date').innerHTML = MONTHS[d.getMonth()] + ' ' + d.getDate();
+    // Night mode, and a small hourly shift of the clock to limit image retention.
+    var night = (h >= 21 || h < 6);
+    var cls = document.body.className;
+    var has = cls.indexOf('night') !== -1;
+    if (night && !has) { document.body.className = cls + ' night'; }
+    if (!night && has) { document.body.className = cls.replace(/\s*night/g, ''); }
+    $('clockwrap').style.marginLeft = ((h % 4) * 3) + 'px';
+  }
+
+  var busyDays = {};
+  var viewing = false;   // true while a tapped date is shown instead of the normal agenda
+  var viewUntil = 0;     // when to return to the normal agenda (ms)
+  var selKey = '';
+  var monthOffset = 0;   // 0 = this month; the arrows browse other months, back to 0 after 60 s
+  var monthUntil = 0;
+  var agendaDay = '';    // the date (iPad clock) when the agenda was last loaded; a change means midnight passed
+  function two(n) { return n < 10 ? '0' + n : '' + n; }
+  function todayKeyNow() { var t = new Date(); return t.getFullYear() + '-' + two(t.getMonth() + 1) + '-' + two(t.getDate()); }
+  function readBusy() {
+    var meta = $('meta');
+    var raw = meta ? meta.getAttribute('data-busy') : '';
+    var parts = raw ? raw.split(',') : [];
+    var i;
+    busyDays = {};
+    for (i = 0; i < parts.length; i++) { busyDays[parts[i]] = true; }
+    readWeather();
+  }
+
+  // Weather block: shown only when the server sent fresh weather ("temp|glyph|word|hi|lo|rain").
+  function readWeather() {
+    var meta = $('meta');
+    var raw = meta ? meta.getAttribute('data-wx') : '';
+    var w = $('weather');
+    var p;
+    if (!raw) { w.style.display = 'none'; $('month').style.top = '305px'; return; }
+    p = raw.split('|');
+    $('wx1').innerHTML = p[1] + ' ' + p[0] + '&deg;<span>' + p[2] + '</span>';
+    $('wx2').innerHTML = 'H ' + p[3] + '&deg; &nbsp;L ' + p[4] + '&deg;' + (p[5] !== '' ? ' &nbsp;&middot;&nbsp; Rain ' + p[5] + '%' : '');
+    w.style.display = 'block';
+    $('month').style.top = '360px';
+  }
+
+  // Month grid: Sunday-first, today as a white circle, a yellow dot on days that have events.
+  function paintMonth() {
+    var now = new Date();
+    var base = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+    var y = base.getFullYear(), m = base.getMonth();
+    var first = new Date(y, m, 1);
+    var lead = first.getDay();
+    var weeks = Math.ceil((lead + new Date(y, m + 1, 0).getDate()) / 7);
+    var todayKey = todayKeyNow();
+    var h = '<div id="mhead"><span class="mnav l" data-d="-1">&lsaquo;</span>' + MONTHS[m] + ' ' + y + '<span class="mnav r" data-d="1">&rsaquo;</span></div><table id="mgrid"><tr>';
+    var letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    var w, k, c, key, cls;
+    for (k = 0; k < 7; k++) { h += '<th>' + letters[k] + '</th>'; }
+    h += '</tr>';
+    for (w = 0; w < weeks; w++) {
+      h += '<tr>';
+      for (k = 0; k < 7; k++) {
+        c = new Date(y, m, 1 - lead + w * 7 + k);
+        key = c.getFullYear() + '-' + two(c.getMonth() + 1) + '-' + two(c.getDate());
+        cls = (c.getMonth() !== m ? 'o ' : '') + (key === todayKey ? 'td ' : '') + (key === selKey ? 'sel ' : '') + (busyDays[key] ? 'bz' : '');
+        h += '<td class="' + cls + '" data-date="' + key + '"><span>' + c.getDate() + '</span></td>';
+      }
+      h += '</tr>';
+    }
+    $('month').innerHTML = h + '</table>';
+  }
+
+  function paintEvents() {
+    var now = Math.floor(new Date().getTime() / 1000);
+    var list = $('agenda').getElementsByTagName('div');
+    var i, el, s, e, cls;
+    for (i = 0; i < list.length; i++) {
+      el = list[i];
+      if (el.className.indexOf('ev') !== 0) { continue; }
+      s = parseInt(el.getAttribute('data-s'), 10);
+      e = parseInt(el.getAttribute('data-e'), 10);
+      cls = el.className.replace(/\s*(past|now)/g, '');
+      if (e > s && e <= now) { cls += ' past'; }
+      else if (e > s && s <= now && now < e && el.className.indexOf('allday') === -1) { cls += ' now'; }
+      el.className = cls;
+    }
+  }
+
+  function setStatus() {
+    var st = $('status');
+    var meta = $('meta');
+    var ok = meta ? meta.getAttribute('data-ok') === '1' : false;
+    var stamp = meta ? meta.getAttribute('data-stamp') : '?';
+    if (failing) {
+      st.className = 'bad';
+      st.innerHTML = 'Cannot reach the server. Showing old data. Retrying...';
+    } else if (!ok) {
+      st.className = 'bad';
+      st.innerHTML = 'Calendar not updating (last good: ' + stamp + ')';
+    } else {
+      st.className = '';
+      st.innerHTML = 'Calendar updated ' + stamp + '<small>Tap here to refresh</small>';
+    }
+  }
+
+  // Tap a date in the month grid: show the day before, that day and the day after for 60 s.
+  function showDay(key) { loadView('day?date=' + key, key); }
+
+  // Shared by the tapped-day view and the weather forecast view (both return a fragment that
+  // starts with the hidden meta element and a "Back to today" button).
+  function loadView(url, key) {
+    var x = new XMLHttpRequest();
+    x.open('GET', url + (url.indexOf('?') === -1 ? '?' : '&') + '_=' + new Date().getTime(), true);
+    x.timeout = 10000;
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) { return; }
+      if (x.status === 200 && x.responseText.indexOf('id="meta"') !== -1) {
+        viewing = true;
+        viewUntil = new Date().getTime() + 60000;
+        monthUntil = viewUntil;
+        selKey = key;
+        $('agenda').innerHTML = x.responseText;
+        readBusy();
+        paintMonth();
+        paintEvents();
+      }
+    };
+    try { x.send(); } catch (err) {}
+  }
+
+  function backToToday() {
+    viewing = false;
+    selKey = '';
+    monthOffset = 0;
+    paintMonth();
+    refresh(true);
+  }
+
+  $('month').onclick = function (e) {
+    var t = e.target;
+    while (t && t !== this && t.tagName !== 'TD' && t.className.indexOf('mnav') === -1) { t = t.parentNode; }
+    if (!t || t === this) { return; }
+    if (t.tagName === 'TD' && t.getAttribute('data-date')) { showDay(t.getAttribute('data-date')); }
+    else if (t.className.indexOf('mnav') !== -1) {
+      monthOffset += parseInt(t.getAttribute('data-d'), 10);
+      monthUntil = new Date().getTime() + 60000;
+      paintMonth();
+    }
+  };
+  // Tap the weather block: 4-day forecast in the left column for 60 s.
+  $('weather').onclick = function () { loadView('forecast', ''); };
+  // Tap the status line: re-read the calendar from Google now (light, no page reload).
+  $('status').onclick = function () { viewing = false; selKey = ''; monthOffset = 0; paintMonth(); refresh(true, true); };
+  // Tap "Refresh": reload the whole page and re-read Google first. A Home Screen app has no reload
+  // button, so this also picks up a newly deployed version of the page without closing the app.
+  $('refreshbtn').onclick = function () {
+    this.innerHTML = 'Refreshing...';
+    location.href = location.pathname + '?force=1&_=' + new Date().getTime();
+  };
+  $('agenda').onclick = function (e) {
+    var t = e.target;
+    while (t && t !== this && t.className !== 'back') { t = t.parentNode; }
+    if (t && t.className === 'back') { backToToday(); }
+  };
+
+  function refresh(retry, force) {
+    if (busy || viewing) { return; }
+    busy = true;
+    if (force) { $('status').className = ''; $('status').innerHTML = 'Refreshing...'; }
+    var x = new XMLHttpRequest();
+    x.open('GET', 'agenda?_=' + new Date().getTime() + (force ? '&force=1' : ''), true);
+    x.timeout = force ? 30000 : 10000;
+    function done(good) {
+      busy = false;
+      if (good) {
+        failing = false;
+        lastFetchOk = new Date().getTime();
+        agendaDay = todayKeyNow();
+      } else {
+        failing = true;
+        if (retry) { setTimeout(function () { refresh(false); }, 4000); }
+      }
+      setStatus();
+      readBusy();
+      paintMonth();
+      paintEvents();
+    }
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) { return; }
+      if (x.status === 200 && x.responseText.indexOf('id="meta"') !== -1) {
+        $('agenda').innerHTML = x.responseText;
+        done(true);
+      } else {
+        done(false);
+      }
+    };
+    x.ontimeout = function () { done(false); };
+    try { x.send(); } catch (err) { done(false); }
+  }
+
+  // Wake from sleep: Safari is suspended while the iPad is locked. Verified on this iPad:
+  // visibilitychange fires on wake and the 1 s timer shows a big gap.
+  document.addEventListener('visibilitychange', function () {
+    if (!(document.hidden || document.webkitHidden)) { viewing = false; selKey = ''; monthOffset = 0; paintClock(); paintMonth(); refresh(true); }
+  }, false);
+
+  // Keep the page from scrolling or zooming if touched.
+  document.addEventListener('touchmove', function (e) { e.preventDefault(); }, false);
+
+  setInterval(function () {
+    var nowMs = new Date().getTime();
+    var gap = nowMs - lastTick;
+    lastTick = nowMs;
+    paintClock();
+    var d = new Date();
+    if (d.getSeconds() === 0) { paintEvents(); if (d.getMinutes() === 0 || !$('mhead')) { paintMonth(); } }
+    if (viewing && nowMs > viewUntil) { backToToday(); }
+    if (monthOffset !== 0 && !viewing && nowMs > monthUntil) { monthOffset = 0; paintMonth(); }
+    if (gap > 5000) { viewing = false; selKey = ''; monthOffset = 0; refresh(true); }
+    // Midnight passed on the iPad clock: reload the agenda now so "Today" is right.
+    if (!viewing && !busy && agendaDay && todayKeyNow() !== agendaDay) { paintMonth(); refresh(true); }
+    // Normal cadence: every 3 minutes (the server re-reads the calendar every 5), faster while failing.
+    if (nowMs - lastFetchOk > (failing ? 30000 : 180000)) { refresh(true); }
+  }, 1000);
+
+  readBusy();
+  paintClock();
+  paintMonth();
+  paintEvents();
+  setStatus();
+  lastFetchOk = new Date().getTime();
+  agendaDay = todayKeyNow();
+})();
+</script>
+</body>
+</html>

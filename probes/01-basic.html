@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Probe 1: basics</title>
+<script src="reporter.js"></script>
+<style>
+body { margin: 0; padding: 16px; font-family: Helvetica, Arial, sans-serif; font-size: 22px; background: #fff; color: #000; }
+h1 { margin: 0 0 8px; font-size: 30px; }
+.row { display: block; border-bottom: 1px solid #999; padding: 6px 0; }
+.k { display: inline-block; width: 300px; font-weight: bold; }
+.ok { color: #060; } .bad { color: #b00; }
+/* CSS tests: each box shows a result inside */
+.flex { display: -webkit-flex; display: flex; width: 300px; border: 2px solid #333; }
+.flex div { -webkit-flex: 1; flex: 1; background: #9cf; padding: 4px; text-align: center; }
+.calc { width: calc(50% - 20px); background: #fc9; padding: 4px; }
+.vh { height: 10vh; background: #cf9; }
+.trans { width: 60px; height: 30px; background: #c9f; -webkit-transition: width 1s; transition: width 1s; }
+.fonts span { display: inline-block; margin-right: 20px; }
+.grid { display: grid; }
+.sticky { position: sticky; }
+.fixedbar { position: fixed; top: 0; right: 0; background: #000; color: #fff; padding: 4px 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="fixedbar" id="size"></div>
+<h1>Probe 1: basics</h1>
+<div id="out"></div>
+
+<div class="row"><span class="k">Flexbox (3 equal cells)</span></div>
+<div class="flex"><div>A</div><div>B</div><div>C</div></div>
+<div class="row"><span class="k">calc(50% - 20px)</span></div>
+<div class="calc">should be a bit under half width</div>
+<div class="row"><span class="k">vh unit (10vh bar)</span></div>
+<div class="vh" id="vh"></div>
+<div class="row"><span class="k">Transition (grows to 300px)</span></div>
+<div class="trans" id="trans"></div>
+<div class="row"><span class="k">Fonts (look different?)</span></div>
+<div class="fonts">
+  <span style="font-family:Helvetica">Helvetica 0123</span>
+  <span style="font-family:Georgia">Georgia 0123</span>
+  <span style="font-family:'Courier New'">Courier 0123</span>
+  <span style="font-family:Menlo">Menlo 0123</span>
+  <span style="font-family:'American Typewriter'">Typewriter 0123</span>
+  <span style="font-family:sans-serif;font-weight:100">sans thin 0123</span>
+  <span style="font-family:sans-serif;font-weight:900">sans heavy 0123</span>
+</div>
+<div class="row"><span class="k">Unicode glyphs</span> ☀ ☁ ☂ ✓ ✗ ★ ➜ é ñ 🍳 🥕</div>
+<script>
+(function () {
+  var out = document.getElementById('out');
+  function row(k, v, good) {
+    var d = document.createElement('div');
+    d.className = 'row';
+    d.innerHTML = '<span class="k">' + k + '</span><span class="' + (good === true ? 'ok' : good === false ? 'bad' : '') + '">' + v + '</span>';
+    out.appendChild(d);
+  }
+  row('Protocol', location.protocol + ' (https padlock?)');
+  row('Host', location.host);
+  row('User agent', navigator.userAgent);
+  row('Screen px', screen.width + 'x' + screen.height + ', DPR ' + window.devicePixelRatio);
+  row('Window px', window.innerWidth + 'x' + window.innerHeight);
+  row('Orientation', (window.orientation !== undefined ? window.orientation : 'n/a') + ' deg');
+  row('Standalone (home screen)', String(navigator.standalone));
+  row('CSS flex', String(typeof document.body.style.flex !== 'undefined' || typeof document.body.style.webkitFlex !== 'undefined'));
+  row('CSS grid (expected: no)', String(typeof document.body.style.grid !== 'undefined'));
+  row('position:sticky', String(typeof document.body.style.position !== 'undefined' && (function(){var e=document.createElement('div');e.style.position='-webkit-sticky';return e.style.position==='-webkit-sticky';})()));
+  row('CSS variables', String(window.CSS && CSS.supports ? CSS.supports('--a', '0') : 'CSS.supports missing'));
+  row('Page loaded at', new Date().toString());
+  setTimeout(function () { document.getElementById('trans').style.width = '300px'; }, 300);
+  var vh = document.getElementById('vh');
+  row('10vh bar measured', vh.offsetHeight + ' px (expect ~' + Math.round(window.innerHeight / 10) + ')');
+  document.getElementById('size').innerHTML = window.innerWidth + 'x' + window.innerHeight;
+})();
+</script>
+</body>
+</html>

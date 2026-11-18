@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probe 5: clock + timers</title>
+<script src="reporter.js"></script>
+<style>
+body { margin: 0; padding: 24px; font-family: Helvetica, Arial, sans-serif; font-size: 24px; }
+.big { font-size: 110px; font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>Probe 5: clock + timers</h1>
+<p>Leave open 10+ min. Then check: does the clock still tick? Is "ticks" about
+(seconds elapsed)? Did the iPad sleep (Auto-Lock) and freeze it?</p>
+<div class="big" id="clock">--:--</div>
+<p id="info"></p>
+<script>
+(function () {
+  var start = new Date().getTime(), ticks = 0;
+  function two(n) { return n < 10 ? '0' + n : '' + n; }
+  setInterval(function () {
+    ticks++;
+    var d = new Date();
+    document.getElementById('clock').innerHTML = two(d.getHours()) + ':' + two(d.getMinutes()) + ':' + two(d.getSeconds());
+    var el = Math.round((d.getTime() - start) / 1000);
+    document.getElementById('info').innerHTML =
+      'Started ' + new Date(start).toString() + '<br>Elapsed ' + el + ' s<br>Ticks ' + ticks +
+      ' (if ticks is far below elapsed, timers were paused)';
+  }, 1000);
+})();
+</script>
+</body>
+</html>

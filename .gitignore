@@ -1,0 +1,20 @@
+# Secrets and local settings
+.env
+.env.*
+*.local
+server/secret.url
+server/config.env
+crontab.before
+.venv/
+*.pyc
+__pycache__/
+.claude/
+
+# Logs
+probes/errors.log
+.server-test.log
+
+# Personal working notes (hostnames, addresses, accounts): kept on the owner's PC only, not in this public repo
+CLAUDE.md
+SYSTEMS.md
+docs/ANALYSIS.md

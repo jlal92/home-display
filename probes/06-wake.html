@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probe 6: sleep and wake</title>
+<style>
+body { margin: 0; padding: 20px; font-family: Helvetica, Arial, sans-serif; font-size: 22px; }
+h1 { font-size: 28px; margin: 0 0 8px; }
+.big { font-size: 64px; font-weight: bold; }
+.ev { border-bottom: 1px solid #999; padding: 4px 0; font-size: 20px; font-family: Menlo, Courier, monospace; }
+.bad { color: #b00; } .ok { color: #060; }
+</style>
+</head>
+<body>
+<h1>Probe 6: sleep and wake</h1>
+<p><b>How:</b> open this page, wait 10 s, then press the iPad's top (power) button to lock it.
+Wait 5 minutes, press Home to wake it, and do NOT touch the page. Photograph what it shows
+within 30 s of waking. Then repeat once with a 20 minute lock if you can.</p>
+<div class="big" id="clock">--:--:--</div>
+<p id="status">starting...</p>
+<div id="log"></div>
+<script>
+/* ES5 only. Logs wake/sleep signals on screen and to the server (GET report?m=...). */
+(function () {
+  var logEl = document.getElementById('log');
+  var statusEl = document.getElementById('status');
+  var lastTick = new Date().getTime();
+  var count = 0;
+  function two(n) { return n < 10 ? '0' + n : '' + n; }
+  function stamp(d) { return two(d.getHours()) + ':' + two(d.getMinutes()) + ':' + two(d.getSeconds()); }
+  function send(msg) {
+    try {
+      var x = new XMLHttpRequest();
+      x.open('GET', 'report?p=wake&m=' + encodeURIComponent(msg), true);
+      x.send();
+    } catch (e) {}
+  }
+  function log(msg, bad) {
+    count++;
+    var d = document.createElement('div');
+    d.className = 'ev' + (bad ? ' bad' : '');
+    d.appendChild(document.createTextNode(stamp(new Date()) + ' ' + msg));
+    logEl.insertBefore(d, logEl.firstChild);
+    while (logEl.childNodes.length > 12) { logEl.removeChild(logEl.lastChild); }
+    send('EVENT ' + msg);
+  }
+  function hidden() {
+    return !!(document.hidden || document.webkitHidden);
+  }
+  function ping(label, retry) {
+    var t0 = new Date().getTime();
+    var x = new XMLHttpRequest();
+    x.open('GET', 'ping.json?_=' + t0, true);
+    x.timeout = 8000;
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) { return; }
+      var ms = new Date().getTime() - t0;
+      if (x.status === 200) {
+        log(label + ': XHR ok ' + ms + ' ms');
+        statusEl.innerHTML = '<span class="ok">Last XHR ok at ' + stamp(new Date()) + '</span>';
+      } else {
+        log(label + ': XHR FAILED status ' + x.status + ' after ' + ms + ' ms', true);
+        statusEl.innerHTML = '<span class="bad">Last XHR failed at ' + stamp(new Date()) + '</span>';
+        if (retry) { setTimeout(function () { ping(label + ' retry', false); }, 3000); }
+      }
+    };
+    x.ontimeout = function () {
+      log(label + ': XHR TIMEOUT', true);
+      if (retry) { setTimeout(function () { ping(label + ' retry', false); }, 3000); }
+    };
+    x.send();
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    log('visibilitychange: ' + (hidden() ? 'HIDDEN' : 'VISIBLE'));
+    if (!hidden()) { ping('on visible', true); }
+  }, false);
+  window.addEventListener('pageshow', function (e) { log('pageshow persisted=' + !!e.persisted); }, false);
+  window.addEventListener('pagehide', function () { log('pagehide'); }, false);
+  window.addEventListener('focus', function () { log('window focus'); }, false);
+  window.addEventListener('blur', function () { log('window blur'); }, false);
+  window.addEventListener('online', function () { log('online'); }, false);
+  window.addEventListener('offline', function () { log('offline', true); }, false);
+
+  setInterval(function () {
+    var now = new Date().getTime();
+    var gap = now - lastTick;
+    lastTick = now;
+    document.getElementById('clock').innerHTML = stamp(new Date(now));
+    if (gap > 3000) {
+      log('TIMER GAP ' + Math.round(gap / 1000) + ' s (page was suspended)', true);
+      ping('after gap', true);
+    }
+  }, 1000);
+
+  log('page loaded; hidden=' + hidden());
+  ping('on load', false);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probe 2: JavaScript</title>
+<script src="reporter.js"></script>
+<style>
+body { margin: 0; padding: 16px; font-family: Helvetica, Arial, sans-serif; font-size: 20px; }
+h1 { margin: 0 0 8px; font-size: 28px; }
+.row { border-bottom: 1px solid #999; padding: 4px 0; }
+.k { display: inline-block; width: 330px; font-weight: bold; }
+.ok { color: #060; } .bad { color: #b00; }
+</style>
+</head>
+<body>
+<h1>Probe 2: JavaScript</h1>
+<div id="sum"></div>
+<div id="out"></div>
+<script>
+/* ES5 only in this file. Syntax features are tested via new Function so a
+   syntax error cannot stop this page. */
+(function () {
+  var out = document.getElementById('out');
+  var yes = 0, no = 0, noList = [];
+  function row(k, good, note) {
+    var d = document.createElement('div');
+    d.className = 'row';
+    d.innerHTML = '<span class="k">' + k + '</span><span class="' + (good ? 'ok' : 'bad') + '">' + (good ? 'YES' : 'NO') + (note ? ' ' + note : '') + '</span>';
+    out.appendChild(d);
+    if (good) { yes++; } else { no++; noList.push(k); }
+  }
+  function syntax(name, code) {
+    try { new Function(code)(); row(name, true); }
+    catch (e) { row(name, false, String(e.message).slice(0, 60)); }
+  }
+  function has(name, test) {
+    var r = false, n = '';
+    try { r = !!test(); } catch (e) { n = String(e.message).slice(0, 60); }
+    row(name, r, n);
+  }
+
+  // Syntax
+  syntax('let (sloppy mode)', 'let a = 1; return a;');
+  syntax('const (sloppy mode)', 'const a = 1; return a;');
+  syntax('let in strict mode', '"use strict"; let a = 1; return a;');
+  syntax('const in strict mode', '"use strict"; const a = 1; return a;');
+  syntax('arrow function', 'var f = function(){}; var g = () => 1; return g();');
+  syntax('template literal', 'var a = 2; return `x${a}`;');
+  syntax('class', '"use strict"; class A { m() { return 1; } } return new A().m();');
+  syntax('default params', 'function f(a = 1) { return a; } return f();');
+  syntax('destructuring', 'var [a] = [1]; var {b} = {b: 2}; return a + b;');
+  syntax('spread / rest', 'function f(...r) { return r.length; } return f(...[1,2]);');
+  syntax('for...of', 'for (var x of [1]) {} return 1;');
+  syntax('async/await', 'async function f() {} return f;');
+  syntax('exponent **', 'return 2 ** 3;');
+  syntax('trailing comma in call', 'function f(a,) {} return 1;');
+
+  // APIs
+  has('Promise', function () { return typeof Promise === 'function'; });
+  has('Map / Set', function () { return typeof Map === 'function' && typeof Set === 'function'; });
+  has('Symbol', function () { return typeof Symbol === 'function'; });
+  has('Array.from', function () { return Array.from; });
+  has('Array.prototype.find', function () { return [].find; });
+  has('Array.prototype.includes', function () { return [].includes; });
+  has('Object.assign', function () { return Object.assign; });
+  has('Object.entries', function () { return Object.entries; });
+  has('String.prototype.includes', function () { return ''.includes; });
+  has('String.prototype.startsWith', function () { return ''.startsWith; });
+  has('String.prototype.padStart', function () { return ''.padStart; });
+  has('Number.isInteger', function () { return Number.isInteger; });
+  has('fetch', function () { return typeof fetch === 'function'; });
+  has('XMLHttpRequest (typeof is "object" on old WebKit)', function () { return typeof XMLHttpRequest !== 'undefined' && !!new XMLHttpRequest(); });
+  has('JSON.parse', function () { return JSON.parse('{"a":1}').a === 1; });
+  has('requestAnimationFrame', function () { return typeof requestAnimationFrame === 'function'; });
+  has('Date ISO parse (2026-11-17T09:00:00Z)', function () { return !isNaN(new Date('2026-11-17T09:00:00Z').getTime()); });
+  has('Date ISO with offset (-05:00)', function () { return !isNaN(new Date('2026-11-17T09:00:00-05:00').getTime()); });
+  has('Date "2026-11-17" (date-only)', function () { return !isNaN(new Date('2026-11-17').getTime()); });
+  has('Intl.DateTimeFormat', function () { return typeof Intl === 'object' && Intl.DateTimeFormat; });
+  has('toLocaleTimeString with options', function () { return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).length > 0; });
+  has('Time zone option really honored', function () {
+    var d = new Date(0);
+    return d.toLocaleString('en-US', { timeZone: 'America/New_York' }) !== d.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' });
+  });
+  has('localStorage (read/write)', function () { localStorage.setItem('p2', '1'); return localStorage.getItem('p2') === '1'; });
+  has('classList', function () { return document.body.classList; });
+  has('querySelectorAll', function () { return document.querySelectorAll; });
+  has('addEventListener', function () { return document.addEventListener; });
+  has('Page Visibility API', function () { return typeof document.hidden !== 'undefined' || typeof document.webkitHidden !== 'undefined'; });
+  has('Notification', function () { return typeof Notification !== 'undefined'; });
+  has('Service Worker (expected: no)', function () { return 'serviceWorker' in navigator; });
+  has('Web Audio / speech (info)', function () { return typeof speechSynthesis !== 'undefined'; });
+
+  document.getElementById('sum').innerHTML =
+    '<div class="row"><b>' + yes + ' yes, ' + no + ' no.</b> Missing: ' + (noList.length ? noList.join(', ') : 'none') + '</div>' +
+    '<div class="row">UA: ' + navigator.userAgent + '</div>';
+})();
+</script>
+</body>
+</html>
